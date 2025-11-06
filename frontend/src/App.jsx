@@ -6,7 +6,7 @@ function App() {
 
   useEffect(() => {
     // Reemplaza la URL por la de tu backend si usa otro puerto o https
-    fetch("http://localhost:5025/api/hello")
+    fetch("http://localhost:5000/api/hello")
       .then((res) => {
         if (!res.ok) throw new Error("Error en la respuesta del servidor");
         return res.json();
