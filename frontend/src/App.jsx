@@ -1,36 +1,39 @@
 import { useEffect, useState } from "react";
 
 function App() {
-  const [mensaje, setMensaje] = useState("");
+  const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Reemplaza la URL por la de tu backend si usa otro puerto o https
-    fetch("http://localhost:5000/api/hello")
+    fetch("http://localhost:5000/api/users")
       .then((res) => {
-        if (!res.ok) throw new Error("Error en la respuesta del servidor");
+        if (!res.ok) throw new Error("Error al obtener usuarios");
         return res.json();
       })
-      .then((data) => setMensaje(data.message))
+      .then((data) => setUsers(data))
       .catch((err) => {
         console.error(err);
-        setError("No se pudo conectar con el backend. Revisa consola.");
+        setError("No se pudieron cargar los usuarios. Ver consola.");
       });
   }, []);
 
   return (
-    <div
-      style={{
-        fontFamily: "sans-serif",
-        textAlign: "center",
-        marginTop: "3rem",
-      }}
-    >
+    <div style={{ fontFamily: "sans-serif", padding: "2rem" }}>
       <h1>TitanGymApp 🏋️</h1>
-      {error ? (
-        <p style={{ color: "red" }}>{error}</p>
+      <h2>Lista de usuarios</h2>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      {users.length === 0 && !error ? (
+        <p>Cargando usuarios...</p>
       ) : (
-        <p>{mensaje || "Cargando..."}</p>
+        <ul>
+          {users.map((user) => (
+            <li key={user.id}>
+              <strong>{user.name}</strong> — {user.role}
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
