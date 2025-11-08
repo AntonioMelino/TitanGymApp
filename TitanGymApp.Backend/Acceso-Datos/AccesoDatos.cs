@@ -1,6 +1,6 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Data;
-using MySql.Data.MySqlClient;
 
 namespace TitanGymApp.Backend.Acceso_Datos
 {
@@ -10,12 +10,16 @@ namespace TitanGymApp.Backend.Acceso_Datos
         private MySqlCommand comando;
         private MySqlDataReader lector;
 
-        public MySqlDataReader Lector => lector;
+        public MySqlDataReader Lector
+        {
+            get { return lector; }
+        }
 
         public AccesoDatos()
         {
-            // Ajustá user/password/host según tu MySQL local
-            conexion = new MySqlConnection("server=localhost; database=titangym; user=root; password=;");
+            // ⚠️ Ajustá usuario y contraseña según tu instalación de MySQL
+            string cadenaConexion = "server=localhost; database=titangymapp; user=root; password=root;";
+            conexion = new MySqlConnection(cadenaConexion);
             comando = new MySqlCommand();
         }
 
@@ -25,19 +29,13 @@ namespace TitanGymApp.Backend.Acceso_Datos
             comando.CommandText = consulta;
         }
 
-        public void setearProcedimiento(string sp)
-        {
-            comando.CommandType = CommandType.StoredProcedure;
-            comando.CommandText = sp;
-        }
-
         public void ejecutarLectura()
         {
             comando.Connection = conexion;
             try
             {
                 conexion.Open();
-                lector = (MySqlDataReader)comando.ExecuteReader();
+                lector = comando.ExecuteReader();
             }
             catch (Exception ex)
             {
@@ -57,6 +55,10 @@ namespace TitanGymApp.Backend.Acceso_Datos
             {
                 throw ex;
             }
+            finally
+            {
+                conexion.Close();
+            }
         }
 
         public void setearParametro(string nombre, object valor)
@@ -69,24 +71,6 @@ namespace TitanGymApp.Backend.Acceso_Datos
             if (lector != null)
                 lector.Close();
             conexion.Close();
-        }
-
-        public object ejecutarEscalar()
-        {
-            comando.Connection = conexion;
-            try
-            {
-                conexion.Open();
-                return comando.ExecuteScalar();
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                conexion.Close();
-            }
         }
     }
 }
