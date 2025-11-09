@@ -1,4 +1,4 @@
-import ClientesList from "./ClientesList";
+import { ClientesList } from "./features/clientes";
 
 function App() {
   return (
