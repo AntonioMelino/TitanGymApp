@@ -12,3 +12,10 @@ CREATE TABLE clientes (
     Fecha_Alta DATETIME DEFAULT CURRENT_TIMESTAMP,
     Activo BOOLEAN DEFAULT 1
 );
+
+USE titangymapp;
+
+INSERT INTO clientes (DNI, Nombre, Apellido, Direccion, Telefono, Correo, Fecha_Alta, Activo)
+VALUES (12345678, 'Antonio', 'Melino', 'Calle Falsa 123', '1122334455', 'antonio@email.com', '2025-11-07 00:00:00', 1);
+
+select * from clientes;
