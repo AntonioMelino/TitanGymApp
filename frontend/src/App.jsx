@@ -1,9 +1,14 @@
-import { ClientesList } from "./features/clientes";
+import { ClientesList, ClienteForm } from "./features/clientes";
 
 function App() {
   return (
-    <div className="max-w-4xl mx-auto mt-10">
-      <h1 className="text-3xl font-bold mb-6 text-center">TitanGymApp 🏋️‍♂️</h1>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4 text-center">
+        Titan Gym - Clientes
+      </h1>
+
+      <ClienteForm />
+      <hr className="my-6" />
       <ClientesList />
     </div>
   );
