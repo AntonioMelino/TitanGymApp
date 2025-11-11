@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getClientes, updateCliente, deleteCliente } from "./clientesService"; // 👈 Importamos las funciones del servicio
 
 function ClientesList() {
   const [clientes, setClientes] = useState([]);
@@ -15,11 +16,11 @@ function ClientesList() {
   // 🔹 Cargar clientes al iniciar
   const fetchClientes = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/clientes");
-      const data = await response.json();
+      const data = await getClientes();
       setClientes(data);
     } catch (error) {
-      console.error("Error al obtener clientes:", error);
+      console.error(error);
+      alert("Error al cargar clientes");
     }
   };
 
@@ -27,15 +28,10 @@ function ClientesList() {
     fetchClientes();
   }, []);
 
-  // 🔹 Manejar cambios en inputs (para editar)
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 🔹 Activar modo edición
   const handleEdit = (cliente) => {
     setEditando(cliente.id);
     setFormData({
@@ -48,7 +44,6 @@ function ClientesList() {
     });
   };
 
-  // 🔹 Cancelar edición
   const cancelarEdicion = () => {
     setEditando(null);
     setFormData({
@@ -61,48 +56,26 @@ function ClientesList() {
     });
   };
 
-  // 🔹 Guardar cambios (PUT)
   const guardarCambios = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/clientes/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id,
-          ...formData,
-          activo: true,
-        }),
-      });
-
-      if (response.ok) {
-        alert("✅ Cliente actualizado correctamente");
-        setEditando(null);
-        fetchClientes();
-      } else {
-        alert("❌ Error al actualizar cliente");
-      }
+      await updateCliente(id, { id, ...formData, activo: true });
+      alert("✅ Cliente actualizado correctamente");
+      setEditando(null);
+      fetchClientes();
     } catch (error) {
-      alert("⚠️ Error de conexión con el servidor");
+      alert(error.message);
     }
   };
 
-  // 🔹 Eliminar cliente (baja lógica)
   const eliminarCliente = async (id) => {
     if (!confirm("¿Seguro que querés eliminar este cliente?")) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/clientes/${id}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        alert("🗑️ Cliente eliminado correctamente");
-        fetchClientes();
-      } else {
-        alert("❌ Error al eliminar cliente");
-      }
+      await deleteCliente(id);
+      alert("🗑️ Cliente eliminado correctamente");
+      fetchClientes();
     } catch (error) {
-      alert("⚠️ Error de conexión con el servidor");
+      alert(error.message);
     }
   };
 
