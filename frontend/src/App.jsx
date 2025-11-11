@@ -1,16 +1,20 @@
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import DashboardLayout from "./layout/DashboardLayout";
+import Home from "./pages/Home";
 import { ClientesList, ClienteForm } from "./features/clientes";
 
 function App() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4 text-center">
-        Titan Gym - Clientes
-      </h1>
-
-      <ClienteForm />
-      <hr className="my-6" />
-      <ClientesList />
-    </div>
+    <Router>
+      <DashboardLayout>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/clientes" element={<ClientesList />} />
+          <Route path="/clientes/nuevo" element={<ClienteForm />} />
+          <Route path="/clientes/editar/:id" element={<ClienteForm />} />
+        </Routes>
+      </DashboardLayout>
+    </Router>
   );
 }
 
