@@ -1,174 +1,143 @@
-import { useEffect, useState } from "react";
-import { getClientes, updateCliente, deleteCliente } from "./clientesService"; // 👈 Importamos las funciones del servicio
+import React, { useEffect, useState } from "react";
+import { DataGrid } from "@mui/x-data-grid";
+import { Box, Button, Typography, Stack } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
-function ClientesList() {
+const ClientesList = () => {
   const [clientes, setClientes] = useState([]);
-  const [editando, setEditando] = useState(null);
-  const [formData, setFormData] = useState({
-    dni: "",
-    nombre: "",
-    apellido: "",
-    direccion: "",
-    telefono: "",
-    correo: "",
-  });
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  // 🔹 Cargar clientes al iniciar
-  const fetchClientes = async () => {
-    try {
-      const data = await getClientes();
-      setClientes(data);
-    } catch (error) {
-      console.error(error);
-      alert("Error al cargar clientes");
-    }
-  };
+  const apiUrl = "http://localhost:5000/api/clientes";
 
   useEffect(() => {
+    const fetchClientes = async () => {
+      try {
+        const response = await axios.get(apiUrl);
+        setClientes(response.data);
+      } catch (error) {
+        console.error("Error al obtener los clientes:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchClientes();
   }, []);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleEdit = (cliente) => {
-    setEditando(cliente.id);
-    setFormData({
-      dni: cliente.dni,
-      nombre: cliente.nombre,
-      apellido: cliente.apellido,
-      direccion: cliente.direccion,
-      telefono: cliente.telefono,
-      correo: cliente.correo,
-    });
-  };
-
-  const cancelarEdicion = () => {
-    setEditando(null);
-    setFormData({
-      dni: "",
-      nombre: "",
-      apellido: "",
-      direccion: "",
-      telefono: "",
-      correo: "",
-    });
-  };
-
-  const guardarCambios = async (id) => {
+  const handleDelete = async (id) => {
+    if (!window.confirm("¿Seguro que deseas desactivar este cliente?")) return;
     try {
-      await updateCliente(id, { id, ...formData, activo: true });
-      alert("✅ Cliente actualizado correctamente");
-      setEditando(null);
-      fetchClientes();
+      await axios.delete(`${apiUrl}/${id}`);
+      setClientes(
+        clientes.map((c) => (c.id === id ? { ...c, activo: false } : c))
+      );
     } catch (error) {
-      alert(error.message);
+      console.error("Error al desactivar cliente:", error);
     }
   };
 
-  const eliminarCliente = async (id) => {
-    if (!confirm("¿Seguro que querés eliminar este cliente?")) return;
-
+  const handleActivate = async (id) => {
+    if (!window.confirm("¿Deseas activar nuevamente este cliente?")) return;
     try {
-      await deleteCliente(id);
-      alert("🗑️ Cliente eliminado correctamente");
-      fetchClientes();
+      await axios.put(`${apiUrl}/${id}`, { activo: true });
+      setClientes(
+        clientes.map((c) => (c.id === id ? { ...c, activo: true } : c))
+      );
     } catch (error) {
-      alert(error.message);
+      console.error("Error al activar cliente:", error);
     }
   };
+
+  const columns = [
+    { field: "id", headerName: "ID", width: 80 },
+    { field: "dni", headerName: "DNI", width: 100 },
+    { field: "nombre", headerName: "Nombre", width: 150 },
+    { field: "apellido", headerName: "Apellido", width: 150 },
+    { field: "telefono", headerName: "Teléfono", width: 150 },
+    { field: "correo", headerName: "Correo", width: 200 },
+    {
+      field: "activo",
+      headerName: "Activo",
+      width: 100,
+      renderCell: (params) => (params.value ? "✅" : "❌"),
+    },
+    {
+      field: "acciones",
+      headerName: "Acciones",
+      width: 250,
+      renderCell: (params) => (
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            startIcon={<EditIcon />}
+            onClick={() => navigate(`/clientes/editar/${params.row.id}`)}
+          >
+            Editar
+          </Button>
+
+          {params.row.activo ? (
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              startIcon={<DeleteIcon />}
+              onClick={() => handleDelete(params.row.id)}
+            >
+              Desactivar
+            </Button>
+          ) : (
+            <Button
+              variant="outlined"
+              color="success"
+              size="small"
+              startIcon={<CheckCircleIcon />}
+              onClick={() => handleActivate(params.row.id)}
+            >
+              Activar
+            </Button>
+          )}
+        </Stack>
+      ),
+    },
+  ];
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow mt-8">
-      <h2 className="text-xl font-bold mb-4 text-center">Lista de Clientes</h2>
+    <Box sx={{ p: 3 }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+      >
+        <Typography variant="h5">Clientes</Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => navigate("/clientes/nuevo")}
+        >
+          Nuevo Cliente
+        </Button>
+      </Stack>
 
-      {clientes.length === 0 ? (
-        <p className="text-center text-gray-500">
-          No hay clientes registrados.
-        </p>
-      ) : (
-        <table className="w-full border border-gray-300 text-sm">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="p-2 border">DNI</th>
-              <th className="p-2 border">Nombre</th>
-              <th className="p-2 border">Apellido</th>
-              <th className="p-2 border">Dirección</th>
-              <th className="p-2 border">Teléfono</th>
-              <th className="p-2 border">Correo</th>
-              <th className="p-2 border">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {clientes.map((cliente) => (
-              <tr key={cliente.id} className="text-center">
-                {editando === cliente.id ? (
-                  <>
-                    {[
-                      "dni",
-                      "nombre",
-                      "apellido",
-                      "direccion",
-                      "telefono",
-                      "correo",
-                    ].map((campo) => (
-                      <td key={campo} className="border p-1">
-                        <input
-                          type="text"
-                          name={campo}
-                          value={formData[campo]}
-                          onChange={handleChange}
-                          className="border border-gray-300 rounded p-1 w-full"
-                        />
-                      </td>
-                    ))}
-                    <td className="border p-1">
-                      <button
-                        onClick={() => guardarCambios(cliente.id)}
-                        className="bg-green-500 text-white px-2 py-1 rounded mr-2"
-                      >
-                        💾 Guardar
-                      </button>
-                      <button
-                        onClick={cancelarEdicion}
-                        className="bg-gray-400 text-white px-2 py-1 rounded"
-                      >
-                        ❌ Cancelar
-                      </button>
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td className="border p-1">{cliente.dni}</td>
-                    <td className="border p-1">{cliente.nombre}</td>
-                    <td className="border p-1">{cliente.apellido}</td>
-                    <td className="border p-1">{cliente.direccion}</td>
-                    <td className="border p-1">{cliente.telefono}</td>
-                    <td className="border p-1">{cliente.correo}</td>
-                    <td className="border p-1">
-                      <button
-                        onClick={() => handleEdit(cliente)}
-                        className="bg-blue-500 text-white px-2 py-1 rounded mr-2"
-                      >
-                        ✏️ Editar
-                      </button>
-                      <button
-                        onClick={() => eliminarCliente(cliente.id)}
-                        className="bg-red-500 text-white px-2 py-1 rounded"
-                      >
-                        🗑️ Eliminar
-                      </button>
-                    </td>
-                  </>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+      <div style={{ height: 500, width: "100%" }}>
+        <DataGrid
+          rows={clientes}
+          columns={columns}
+          pageSize={7}
+          loading={loading}
+          getRowId={(row) => row.id}
+        />
+      </div>
+    </Box>
   );
-}
+};
 
 export default ClientesList;
