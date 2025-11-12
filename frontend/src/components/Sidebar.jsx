@@ -1,39 +1,75 @@
 import {
   Drawer,
   List,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
+  useTheme,
 } from "@mui/material";
 import { Home, People } from "@mui/icons-material";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const drawerWidth = 240;
 
 export default function Sidebar() {
+  const theme = useTheme();
+  const location = useLocation();
+
+  // Determina color según el modo del tema
+  const textColor = theme.palette.mode === "light" ? "#000000" : "#FFFFFF";
+  const bgColor =
+    theme.palette.mode === "light" ? "#ffffff" : theme.palette.background.paper;
+
+  // Estilos para el item activo
+  const activeStyle = {
+    backgroundColor:
+      theme.palette.mode === "light" ? "#f0f0f0" : "rgba(255,255,255,0.1)",
+  };
+
   return (
     <Drawer
       variant="permanent"
       sx={{
         width: drawerWidth,
         flexShrink: 0,
-        [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: "border-box" },
+        [`& .MuiDrawer-paper`]: {
+          width: drawerWidth,
+          boxSizing: "border-box",
+          backgroundColor: bgColor,
+          color: textColor,
+        },
       }}
     >
       <List>
-        <ListItem button component={Link} to="/">
-          <ListItemIcon>
+        {/* INICIO */}
+        <ListItemButton
+          component={Link}
+          to="/"
+          sx={{
+            color: textColor,
+            ...(location.pathname === "/" && activeStyle),
+          }}
+        >
+          <ListItemIcon sx={{ color: textColor }}>
             <Home />
           </ListItemIcon>
           <ListItemText primary="Inicio" />
-        </ListItem>
+        </ListItemButton>
 
-        <ListItem button component={Link} to="/clientes">
-          <ListItemIcon>
+        {/* CLIENTES */}
+        <ListItemButton
+          component={Link}
+          to="/clientes"
+          sx={{
+            color: textColor,
+            ...(location.pathname === "/clientes" && activeStyle),
+          }}
+        >
+          <ListItemIcon sx={{ color: textColor }}>
             <People />
           </ListItemIcon>
           <ListItemText primary="Clientes" />
-        </ListItem>
+        </ListItemButton>
       </List>
     </Drawer>
   );
