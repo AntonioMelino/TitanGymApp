@@ -1,96 +1,201 @@
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Grid,
+  TextField,
+  Typography,
+  Switch,
+  FormControlLabel,
+  Stack,
+  Alert,
+} from "@mui/material";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
 
-function ClienteForm() {
-  const [formData, setFormData] = useState({
+const ClienteForm = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const apiUrl = "http://localhost:5000/api/clientes";
+
+  const [cliente, setCliente] = useState({
     dni: "",
     nombre: "",
     apellido: "",
     direccion: "",
     telefono: "",
     correo: "",
+    activo: true,
   });
 
-  const [mensaje, setMensaje] = useState("");
+  const [mensaje, setMensaje] = useState(null);
+  const [error, setError] = useState(null);
+
+  // Si hay ID, cargar cliente existente
+  useEffect(() => {
+    const fetchCliente = async () => {
+      if (!id) return;
+      try {
+        const response = await axios.get(`${apiUrl}/${id}`);
+        setCliente(response.data);
+      } catch (err) {
+        console.error(err);
+        setError("Error al cargar los datos del cliente");
+      }
+    };
+    fetchCliente();
+  }, [id]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
+    const { name, value, type, checked } = e.target;
+    setCliente({
+      ...cliente,
+      [name]: type === "checkbox" ? checked : value,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const nuevoCliente = {
-      dni: parseInt(formData.dni),
-      nombre: formData.nombre,
-      apellido: formData.apellido,
-      direccion: formData.direccion,
-      telefono: formData.telefono,
-      correo: formData.correo,
-      fecha_Alta: new Date().toISOString(),
-      activo: true,
-    };
+    setError(null);
+    setMensaje(null);
 
     try {
-      const response = await fetch("http://localhost:5000/api/clientes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(nuevoCliente),
-      });
-
-      if (response.ok) {
-        setMensaje("✅ Cliente agregado correctamente");
-        setFormData({
-          dni: "",
-          nombre: "",
-          apellido: "",
-          direccion: "",
-          telefono: "",
-          correo: "",
-        });
+      if (id) {
+        await axios.put(`${apiUrl}/${id}`, cliente);
+        setMensaje("Cliente actualizado correctamente ✅");
       } else {
-        const error = await response.text();
-        setMensaje("❌ Error: " + error);
+        await axios.post(apiUrl, { ...cliente, fecha_Alta: new Date() });
+        setMensaje("Cliente creado correctamente ✅");
       }
-    } catch (error) {
-      setMensaje("⚠️ Error de conexión con el servidor");
+
+      setTimeout(() => navigate("/clientes"), 1500);
+    } catch (err) {
+      setError(
+        "Error al guardar los datos. Verifica la conexión o los campos."
+      );
     }
   };
 
   return (
-    <div className="p-4 bg-gray-100 rounded-lg max-w-md mx-auto mt-6 shadow">
-      <h2 className="text-xl font-bold mb-4 text-center">Agregar Cliente</h2>
-      <form onSubmit={handleSubmit} className="space-y-3">
-        {["dni", "nombre", "apellido", "direccion", "telefono", "correo"].map(
-          (campo) => (
-            <input
-              key={campo}
-              type={campo === "dni" ? "number" : "text"}
-              name={campo}
-              value={formData[campo]}
-              onChange={handleChange}
-              placeholder={campo.charAt(0).toUpperCase() + campo.slice(1)}
-              className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-400"
-              required
-            />
-          )
-        )}
+    <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+      <Card sx={{ width: 800, boxShadow: 5, borderRadius: 3 }}>
+        <CardContent>
+          <Typography variant="h5" gutterBottom align="center">
+            {id ? "Editar Cliente" : "Nuevo Cliente"}
+          </Typography>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition"
-        >
-          Guardar Cliente
-        </button>
-      </form>
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="DNI"
+                  name="dni"
+                  value={cliente.dni}
+                  onChange={handleChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Teléfono"
+                  name="telefono"
+                  value={cliente.telefono}
+                  onChange={handleChange}
+                />
+              </Grid>
 
-      {mensaje && <p className="mt-4 text-center">{mensaje}</p>}
-    </div>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Nombre"
+                  name="nombre"
+                  value={cliente.nombre}
+                  onChange={handleChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Apellido"
+                  name="apellido"
+                  value={cliente.apellido}
+                  onChange={handleChange}
+                  required
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Correo"
+                  name="correo"
+                  value={cliente.correo}
+                  onChange={handleChange}
+                  type="email"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Dirección"
+                  name="direccion"
+                  value={cliente.direccion}
+                  onChange={handleChange}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={cliente.activo}
+                      onChange={(e) =>
+                        setCliente({ ...cliente, activo: e.target.checked })
+                      }
+                      name="activo"
+                      color="primary"
+                    />
+                  }
+                  label={cliente.activo ? "Activo" : "Inactivo"}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Stack direction="row" justifyContent="space-between">
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={() => navigate("/clientes")}
+                  >
+                    Volver
+                  </Button>
+                  <Button variant="contained" color="primary" type="submit">
+                    {id ? "Guardar Cambios" : "Crear Cliente"}
+                  </Button>
+                </Stack>
+              </Grid>
+            </Grid>
+          </Box>
+
+          {mensaje && (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              {mensaje}
+            </Alert>
+          )}
+          {error && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+    </Box>
   );
-}
+};
 
 export default ClienteForm;
