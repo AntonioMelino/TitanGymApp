@@ -6,7 +6,7 @@ import {
   ListItemText,
   useTheme,
 } from "@mui/material";
-import { Home, People } from "@mui/icons-material";
+import { Home, People, SportsGymnastics } from "@mui/icons-material";
 import { Link, useLocation } from "react-router-dom";
 
 const drawerWidth = 240;
@@ -15,12 +15,10 @@ export default function Sidebar() {
   const theme = useTheme();
   const location = useLocation();
 
-  // Determina color según el modo del tema
   const textColor = theme.palette.mode === "light" ? "#000000" : "#FFFFFF";
   const bgColor =
     theme.palette.mode === "light" ? "#ffffff" : theme.palette.background.paper;
 
-  // Estilos para el item activo
   const activeStyle = {
     backgroundColor:
       theme.palette.mode === "light" ? "#f0f0f0" : "rgba(255,255,255,0.1)",
@@ -69,6 +67,21 @@ export default function Sidebar() {
             <People />
           </ListItemIcon>
           <ListItemText primary="Clientes" />
+        </ListItemButton>
+
+        {/* ENTRENADORES */}
+        <ListItemButton
+          component={Link}
+          to="/entrenadores"
+          sx={{
+            color: textColor,
+            ...(location.pathname === "/entrenadores" && activeStyle),
+          }}
+        >
+          <ListItemIcon sx={{ color: textColor }}>
+            <SportsGymnastics />
+          </ListItemIcon>
+          <ListItemText primary="Entrenadores" />
         </ListItemButton>
       </List>
     </Drawer>
