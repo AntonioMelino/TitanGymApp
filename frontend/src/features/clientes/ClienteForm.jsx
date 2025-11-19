@@ -10,7 +10,9 @@ import {
   Switch,
   FormControlLabel,
   Stack,
+  Snackbar,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
@@ -30,8 +32,29 @@ const ClienteForm = () => {
     activo: true,
   });
 
+  const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState(null);
   const [error, setError] = useState(null);
+
+  // Validaciones simples
+  const validarFormulario = () => {
+    if (!cliente.nombre || !cliente.apellido || !cliente.dni) {
+      setError("Nombre, apellido y DNI son obligatorios.");
+      return false;
+    }
+
+    if (cliente.correo && !/\S+@\S+\.\S+/.test(cliente.correo)) {
+      setError("El correo no tiene un formato válido.");
+      return false;
+    }
+
+    if (cliente.dni.length < 7 || cliente.dni.length > 10) {
+      setError("El DNI debe tener entre 7 y 10 dígitos.");
+      return false;
+    }
+
+    return true;
+  };
 
   // Si hay ID, cargar cliente existente
   useEffect(() => {
@@ -61,6 +84,10 @@ const ClienteForm = () => {
     setError(null);
     setMensaje(null);
 
+    if (!validarFormulario()) return;
+
+    setLoading(true);
+
     try {
       if (id) {
         await axios.put(`${apiUrl}/${id}`, cliente);
@@ -70,11 +97,15 @@ const ClienteForm = () => {
         setMensaje("Cliente creado correctamente ✅");
       }
 
-      setTimeout(() => navigate("/clientes"), 1500);
+      setTimeout(() => navigate("/clientes"), 1200);
     } catch (err) {
-      setError(
-        "Error al guardar los datos. Verifica la conexión o los campos."
-      );
+      if (err.response?.status === 409) {
+        setError("DNI o correo ya existen en la base de datos.");
+      } else {
+        setError("Error al guardar los datos.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -96,6 +127,7 @@ const ClienteForm = () => {
                   value={cliente.dni}
                   onChange={handleChange}
                   required
+                  type="number"
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -171,27 +203,44 @@ const ClienteForm = () => {
                     variant="outlined"
                     color="secondary"
                     onClick={() => navigate("/clientes")}
+                    disabled={loading}
                   >
                     Volver
                   </Button>
-                  <Button variant="contained" color="primary" type="submit">
-                    {id ? "Guardar Cambios" : "Crear Cliente"}
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    type="submit"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <CircularProgress size={24} color="inherit" />
+                    ) : id ? (
+                      "Guardar Cambios"
+                    ) : (
+                      "Crear Cliente"
+                    )}
                   </Button>
                 </Stack>
               </Grid>
             </Grid>
           </Box>
 
-          {mensaje && (
-            <Alert severity="success" sx={{ mt: 2 }}>
-              {mensaje}
-            </Alert>
-          )}
-          {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
-            </Alert>
-          )}
+          {/* SNACKBAR */}
+          <Snackbar
+            open={!!mensaje || !!error}
+            autoHideDuration={2000}
+            onClose={() => {
+              setMensaje(null);
+              setError(null);
+            }}
+          >
+            {mensaje ? (
+              <Alert severity="success">{mensaje}</Alert>
+            ) : error ? (
+              <Alert severity="error">{error}</Alert>
+            ) : null}
+          </Snackbar>
         </CardContent>
       </Card>
     </Box>
