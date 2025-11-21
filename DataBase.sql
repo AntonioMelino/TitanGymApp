@@ -57,3 +57,4 @@ USE titangymapp;
 drop database titangymapp;
 
 select * from clientes;
+select * from entrenadores;
