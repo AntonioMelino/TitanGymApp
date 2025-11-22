@@ -7,7 +7,91 @@ namespace TitanGymApp.Backend.Negocio
 {
     public class EntrenadorNegocio
     {
+        // ================================
+        // 🔍 VALIDACIONES BASE DE DATOS
+        // ================================
+        private bool ExisteDNI(int dni)
+        {
+            AccesoDatos datos = new AccesoDatos();
+
+            try
+            {
+                datos.setearConsulta("SELECT COUNT(*) FROM entrenadores WHERE DNI = @dni");
+                datos.setearParametro("@dni", dni);
+
+                datos.ejecutarLectura();
+                if (datos.Lector.Read())
+                    return Convert.ToInt32(datos.Lector[0]) > 0;
+
+                return false;
+            }
+            finally { datos.cerrarConexion(); }
+        }
+
+        private bool ExisteEmail(string correo)
+        {
+            AccesoDatos datos = new AccesoDatos();
+
+            try
+            {
+                datos.setearConsulta("SELECT COUNT(*) FROM entrenadores WHERE Correo = @correo");
+                datos.setearParametro("@correo", correo);
+
+                datos.ejecutarLectura();
+                if (datos.Lector.Read())
+                    return Convert.ToInt32(datos.Lector[0]) > 0;
+
+                return false;
+            }
+            finally { datos.cerrarConexion(); }
+        }
+
+        private bool ExisteDNIParaOtro(long id, int dni)
+        {
+            AccesoDatos datos = new AccesoDatos();
+
+            try
+            {
+                datos.setearConsulta("SELECT COUNT(*) FROM entrenadores WHERE DNI = @dni AND Id <> @id");
+                datos.setearParametro("@dni", dni);
+                datos.setearParametro("@id", id);
+
+                datos.ejecutarLectura();
+                if (datos.Lector.Read())
+                    return Convert.ToInt32(datos.Lector[0]) > 0;
+
+                return false;
+            }
+            finally { datos.cerrarConexion(); }
+        }
+
+        private bool ExisteEmailParaOtro(long id, string correo)
+        {
+            AccesoDatos datos = new AccesoDatos();
+
+            try
+            {
+                datos.setearConsulta("SELECT COUNT(*) FROM entrenadores WHERE Correo = @correo AND Id <> @id");
+                datos.setearParametro("@correo", correo);
+                datos.setearParametro("@id", id);
+
+                datos.ejecutarLectura();
+                if (datos.Lector.Read())
+                    return Convert.ToInt32(datos.Lector[0]) > 0;
+
+                return false;
+            }
+            finally { datos.cerrarConexion(); }
+        }
+
+
+
+        // ====================================================
         // 🔹 LISTAR ENTRENADORES
+        // ====================================================
+
+
+
         public List<Entrenador> Listar()
         {
             List<Entrenador> lista = new List<Entrenador>();
@@ -59,6 +143,27 @@ namespace TitanGymApp.Backend.Negocio
         // 🔹 AGREGAR ENTRENADOR
         public void Agregar(Entrenador nuevo)
         {
+
+            // ---------- VALIDACIONES -----------
+
+            if (nuevo.DNI <= 0)
+                throw new Exception("El DNI es obligatorio y debe ser válido.");
+
+            if (string.IsNullOrWhiteSpace(nuevo.Nombre))
+                throw new Exception("El nombre es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(nuevo.Apellido))
+                throw new Exception("El apellido es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(nuevo.Correo))
+                throw new Exception("El correo es obligatorio.");
+
+            if (ExisteDNI(nuevo.DNI))
+                throw new Exception("Ya existe un entrenador con ese DNI.");
+
+            if (ExisteEmail(nuevo.Correo))
+                throw new Exception("Ese correo ya está registrado.");
+
             AccesoDatos datos = new AccesoDatos();
 
             try
@@ -99,6 +204,24 @@ namespace TitanGymApp.Backend.Negocio
         // 🔹 MODIFICAR ENTRENADOR
         public void Modificar(Entrenador entrenador)
         {
+            if (entrenador == null)
+                throw new Exception("Los datos del entrenador son inválidos.");
+
+            if (entrenador.DNI <= 0)
+                throw new Exception("El DNI es obligatorio y debe ser válido.");
+
+            if (string.IsNullOrWhiteSpace(entrenador.Nombre))
+                throw new Exception("El nombre es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(entrenador.Apellido))
+                throw new Exception("El apellido es obligatorio.");
+
+            if (!string.IsNullOrWhiteSpace(entrenador.Correo) && ExisteEmailParaOtro(entrenador.Id, entrenador.Correo))
+                throw new Exception("Ese correo ya está registrado por otro entrenador.");
+
+            if (ExisteDNIParaOtro(entrenador.Id, entrenador.DNI))
+                throw new Exception("Ya existe otro entrenador con ese DNI.");
+
             AccesoDatos datos = new AccesoDatos();
 
             try
