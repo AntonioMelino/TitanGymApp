@@ -15,12 +15,14 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import useClientes from "../hooks/useClientes";
+import { validarCliente } from "../validators/clienteValidator";
 
 const ClienteForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const apiUrl = "http://localhost:5000/api/clientes";
+
+  const { addCliente, updateCliente, getClienteById, loading } = useClientes();
 
   const [cliente, setCliente] = useState({
     dni: "",
@@ -32,44 +34,25 @@ const ClienteForm = () => {
     activo: true,
   });
 
-  const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState(null);
   const [error, setError] = useState(null);
 
-  // Validaciones simples
-  const validarFormulario = () => {
-    if (!cliente.nombre || !cliente.apellido || !cliente.dni) {
-      setError("Nombre, apellido y DNI son obligatorios.");
-      return false;
-    }
+  const [fieldErrors, setFieldErrors] = useState({});
 
-    if (cliente.correo && !/\S+@\S+\.\S+/.test(cliente.correo)) {
-      setError("El correo no tiene un formato válido.");
-      return false;
-    }
-
-    if (cliente.dni.length < 7 || cliente.dni.length > 10) {
-      setError("El DNI debe tener entre 7 y 10 dígitos.");
-      return false;
-    }
-
-    return true;
-  };
-
-  // Si hay ID, cargar cliente existente
+  // Obtener cliente si estamos editando
   useEffect(() => {
-    const fetchCliente = async () => {
+    const fetchData = async () => {
       if (!id) return;
       try {
-        const response = await axios.get(`${apiUrl}/${id}`);
-        setCliente(response.data);
-      } catch (err) {
-        console.error(err);
-        setError("Error al cargar los datos del cliente");
+        const data = await getClienteById(id);
+        setCliente(data);
+      } catch {
+        setError("No se pudieron cargar los datos.");
       }
     };
-    fetchCliente();
-  }, [id]);
+
+    fetchData();
+  }, [id, getClienteById]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -83,29 +66,38 @@ const ClienteForm = () => {
     e.preventDefault();
     setError(null);
     setMensaje(null);
+    setFieldErrors({});
 
-    if (!validarFormulario()) return;
+    const validationMsg = validarCliente(cliente);
+    if (validationMsg) {
+      setError(validationMsg);
 
-    setLoading(true);
+      // Marca los campos necesarios
+      if (validationMsg.toLowerCase().includes("dni")) {
+        setFieldErrors({ dni: true });
+      }
+      if (validationMsg.toLowerCase().includes("correo")) {
+        setFieldErrors({ correo: true });
+      }
+      return;
+    }
 
     try {
       if (id) {
-        await axios.put(`${apiUrl}/${id}`, cliente);
-        setMensaje("Cliente actualizado correctamente ✅");
+        await updateCliente(id, cliente);
+        setMensaje("Cambios guardados correctamente.");
       } else {
-        await axios.post(apiUrl, { ...cliente, fecha_Alta: new Date() });
-        setMensaje("Cliente creado correctamente ✅");
+        await addCliente(cliente);
+        setMensaje("Cliente creado exitosamente.");
       }
 
-      setTimeout(() => navigate("/clientes"), 1200);
+      setTimeout(() => navigate("/clientes"), 1500);
     } catch (err) {
       if (err.response?.status === 409) {
-        setError("DNI o correo ya existen en la base de datos.");
+        setError("⚠️ El DNI o correo ya existen.");
       } else {
-        setError("Error al guardar los datos.");
+        setError("❌ Error al procesar la acción.");
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -113,7 +105,7 @@ const ClienteForm = () => {
     <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
       <Card sx={{ width: 800, boxShadow: 5, borderRadius: 3 }}>
         <CardContent>
-          <Typography variant="h5" gutterBottom align="center">
+          <Typography variant="h5" align="center">
             {id ? "Editar Cliente" : "Nuevo Cliente"}
           </Typography>
 
@@ -127,9 +119,13 @@ const ClienteForm = () => {
                   value={cliente.dni}
                   onChange={handleChange}
                   required
-                  type="number"
+                  error={fieldErrors.dni}
+                  helperText={
+                    fieldErrors.dni ? "DNI inválido o existente." : ""
+                  }
                 />
               </Grid>
+
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -150,6 +146,7 @@ const ClienteForm = () => {
                   required
                 />
               </Grid>
+
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -166,11 +163,14 @@ const ClienteForm = () => {
                   fullWidth
                   label="Correo"
                   name="correo"
+                  type="email"
                   value={cliente.correo}
                   onChange={handleChange}
-                  type="email"
+                  error={fieldErrors.correo}
+                  helperText={fieldErrors.correo ? "Formato no válido." : ""}
                 />
               </Grid>
+
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -189,8 +189,6 @@ const ClienteForm = () => {
                       onChange={(e) =>
                         setCliente({ ...cliente, activo: e.target.checked })
                       }
-                      name="activo"
-                      color="primary"
                     />
                   }
                   label={cliente.activo ? "Activo" : "Inactivo"}
@@ -201,20 +199,15 @@ const ClienteForm = () => {
                 <Stack direction="row" justifyContent="space-between">
                   <Button
                     variant="outlined"
-                    color="secondary"
                     onClick={() => navigate("/clientes")}
                     disabled={loading}
                   >
                     Volver
                   </Button>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    type="submit"
-                    disabled={loading}
-                  >
+
+                  <Button variant="contained" type="submit" disabled={loading}>
                     {loading ? (
-                      <CircularProgress size={24} color="inherit" />
+                      <CircularProgress size={24} />
                     ) : id ? (
                       "Guardar Cambios"
                     ) : (
@@ -226,19 +219,23 @@ const ClienteForm = () => {
             </Grid>
           </Box>
 
-          {/* SNACKBAR */}
           <Snackbar
             open={!!mensaje || !!error}
-            autoHideDuration={2000}
+            autoHideDuration={2500}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
             onClose={() => {
               setMensaje(null);
               setError(null);
             }}
           >
             {mensaje ? (
-              <Alert severity="success">{mensaje}</Alert>
+              <Alert variant="filled" severity="success">
+                {mensaje}
+              </Alert>
             ) : error ? (
-              <Alert severity="error">{error}</Alert>
+              <Alert variant="filled" severity="error">
+                {error}
+              </Alert>
             ) : null}
           </Snackbar>
         </CardContent>

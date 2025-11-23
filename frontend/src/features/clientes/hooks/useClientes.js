@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import clientesService from "../services/clientesService";
 
 export default function useClientes() {
@@ -6,17 +6,22 @@ export default function useClientes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchClientes = async () => {
+  const fetchClientes = useCallback(async () => {
     try {
       setLoading(true);
       const response = await clientesService.getClientes();
       setClientes(response.data);
-    } catch (err) {
+    } catch {
       setError("No se pudieron cargar los clientes.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const getClienteById = useCallback(async (id) => {
+    const response = await clientesService.getClienteById(id);
+    return response.data;
+  }, []);
 
   const addCliente = async (cliente) => {
     await clientesService.addCliente(cliente);
@@ -35,12 +40,13 @@ export default function useClientes() {
 
   useEffect(() => {
     fetchClientes();
-  }, []);
+  }, [fetchClientes]);
 
   return {
     clientes,
     loading,
     error,
+    getClienteById,
     addCliente,
     updateCliente,
     deleteCliente,
