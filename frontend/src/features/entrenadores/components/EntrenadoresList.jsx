@@ -1,58 +1,26 @@
-import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box, Button, Typography, Stack } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import useEntrenadores from "../hooks/useEntrenadores";
 
-const EntrenadoresList = () => {
-  const [entrenadores, setEntrenadores] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function EntrenadoresList() {
+  const { entrenadores, loading, deleteEntrenador, updateEntrenador } =
+    useEntrenadores();
   const navigate = useNavigate();
 
-  const apiUrl = "http://localhost:5000/api/entrenadores";
-
-  useEffect(() => {
-    const fetchEntrenadores = async () => {
-      try {
-        const response = await axios.get(apiUrl);
-        setEntrenadores(response.data);
-      } catch (error) {
-        console.error("Error al obtener los entrenadores:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEntrenadores();
-  }, []);
-
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
     if (!window.confirm("¿Seguro que deseas desactivar este entrenador?"))
       return;
-    try {
-      await axios.delete(`${apiUrl}/${id}`);
-      setEntrenadores(
-        entrenadores.map((e) => (e.id === id ? { ...e, activo: false } : e))
-      );
-    } catch (error) {
-      console.error("Error al desactivar entrenador:", error);
-    }
+    deleteEntrenador(id);
   };
 
-  const handleActivate = async (id) => {
+  const handleActivate = (entrenador) => {
     if (!window.confirm("¿Deseas activar nuevamente este entrenador?")) return;
-    try {
-      await axios.put(`${apiUrl}/${id}`, { activo: true });
-      setEntrenadores(
-        entrenadores.map((e) => (e.id === id ? { ...e, activo: true } : e))
-      );
-    } catch (error) {
-      console.error("Error al activar entrenador:", error);
-    }
+    updateEntrenador(entrenador.id, { ...entrenador, activo: true });
   };
 
   const columns = [
@@ -60,9 +28,10 @@ const EntrenadoresList = () => {
     { field: "dni", headerName: "DNI", width: 100 },
     { field: "nombre", headerName: "Nombre", width: 150 },
     { field: "apellido", headerName: "Apellido", width: 150 },
-    { field: "telefono", headerName: "Teléfono", width: 150 },
-    { field: "especialidad", headerName: "Especialidad", width: 180 },
-    { field: "experiencia_Anios", headerName: "Años Exp.", width: 120 },
+    { field: "telefono", headerName: "Teléfono", width: 140 },
+    { field: "correo", headerName: "Correo", width: 200 },
+    { field: "especialidad", headerName: "Especialidad", width: 160 },
+    { field: "experienciaAnios", headerName: "Años Exp.", width: 120 },
     {
       field: "activo",
       headerName: "Activo",
@@ -100,7 +69,7 @@ const EntrenadoresList = () => {
               color="success"
               size="small"
               startIcon={<CheckCircleIcon />}
-              onClick={() => handleActivate(params.row.id)}
+              onClick={() => handleActivate(params.row)}
             >
               Activar
             </Button>
@@ -112,13 +81,9 @@ const EntrenadoresList = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={2}
-      >
+      <Stack direction="row" justifyContent="space-between" mb={2}>
         <Typography variant="h5">Entrenadores</Typography>
+
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -128,17 +93,14 @@ const EntrenadoresList = () => {
         </Button>
       </Stack>
 
-      <div style={{ height: 550, width: "100%" }}>
+      <div style={{ height: 500, width: "100%" }}>
         <DataGrid
           rows={entrenadores}
           columns={columns}
-          pageSize={7}
           loading={loading}
           getRowId={(row) => row.id}
         />
       </div>
     </Box>
   );
-};
-
-export default EntrenadoresList;
+}

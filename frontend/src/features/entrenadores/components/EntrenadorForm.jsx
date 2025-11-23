@@ -13,14 +13,18 @@ import {
   Alert,
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import useEntrenadores from "../hooks/useEntrenadores";
+import { validarEntrenador } from "../validators/entrenadorValidator";
 
 const EntrenadorForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const apiUrl = "http://localhost:5000/api/entrenadores";
 
-  const [entrenador, setEntrenador] = useState({
+  // 📌 Hook CRUD centralizado
+  const { getEntrenadorById, addEntrenador, updateEntrenador } =
+    useEntrenadores();
+
+  const [form, setForm] = useState({
     dni: "",
     nombre: "",
     apellido: "",
@@ -36,52 +40,53 @@ const EntrenadorForm = () => {
     activo: true,
   });
 
+  const [errors, setErrors] = useState({});
   const [mensaje, setMensaje] = useState(null);
-  const [error, setError] = useState(null);
+  const [errorServidor, setErrorServidor] = useState(null);
 
-  // Si hay ID, cargar entrenador existente
+  // 📌 Si hay ID → carga entrenador
   useEffect(() => {
-    const fetchEntrenador = async () => {
+    const fetchData = async () => {
       if (!id) return;
       try {
-        const response = await axios.get(`${apiUrl}/${id}`);
-        setEntrenador(response.data);
-      } catch (err) {
-        console.error(err);
-        setError("Error al cargar los datos del entrenador");
+        const data = await getEntrenadorById(id);
+        setForm(data);
+      } catch {
+        setErrorServidor("Error al cargar los datos del entrenador.");
       }
     };
-    fetchEntrenador();
-  }, [id]);
+    fetchData();
+  }, [id, getEntrenadorById]);
 
+  // 📌 Controlador de inputs
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
-    setEntrenador({
-      ...entrenador,
-      [name]: type === "checkbox" ? checked : value,
-    });
+    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
   };
 
+  // 📌 Submit con validaciones
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
     setMensaje(null);
+    setErrorServidor(null);
+
+    const erroresVal = validarEntrenador(form);
+    setErrors(erroresVal);
+
+    if (Object.keys(erroresVal).length > 0) return;
 
     try {
       if (id) {
-        await axios.put(`${apiUrl}/${id}`, entrenador);
+        await updateEntrenador(id, form);
         setMensaje("Entrenador actualizado correctamente 💪");
       } else {
-        await axios.post(apiUrl, entrenador);
+        await addEntrenador(form);
         setMensaje("Entrenador creado correctamente 🏋️‍♂️");
       }
 
       setTimeout(() => navigate("/entrenadores"), 1500);
-    } catch (err) {
-      setError(
-        "Error al guardar los datos. Verifica la conexión o los campos."
-      );
+    } catch {
+      setErrorServidor("Error al guardar los datos. Intente nuevamente.");
     }
   };
 
@@ -95,123 +100,141 @@ const EntrenadorForm = () => {
 
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             <Grid container spacing={2}>
+              {/* DNI */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="DNI"
                   name="dni"
-                  value={entrenador.dni}
+                  value={form.dni}
                   onChange={handleChange}
-                  required
                 />
               </Grid>
 
+              {/* Teléfono */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Teléfono"
                   name="telefono"
-                  value={entrenador.telefono}
+                  value={form.telefono}
                   onChange={handleChange}
+                  error={!!errors.telefono}
+                  helperText={errors.telefono}
                 />
               </Grid>
 
+              {/* Nombre */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Nombre"
                   name="nombre"
-                  value={entrenador.nombre}
+                  value={form.nombre}
                   onChange={handleChange}
+                  error={!!errors.nombre}
+                  helperText={errors.nombre}
                   required
                 />
               </Grid>
 
+              {/* Apellido */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Apellido"
                   name="apellido"
-                  value={entrenador.apellido}
+                  value={form.apellido}
                   onChange={handleChange}
+                  error={!!errors.apellido}
+                  helperText={errors.apellido}
                   required
                 />
               </Grid>
 
+              {/* Correo */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Correo"
                   name="correo"
-                  value={entrenador.correo}
-                  onChange={handleChange}
                   type="email"
+                  value={form.correo}
+                  onChange={handleChange}
                 />
               </Grid>
 
+              {/* Dirección */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Dirección"
                   name="direccion"
-                  value={entrenador.direccion}
+                  value={form.direccion}
                   onChange={handleChange}
                 />
               </Grid>
 
+              {/* Especialidad */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Especialidad (ej: Crossfit, HIIT)"
+                  label="Especialidad"
                   name="especialidad"
-                  value={entrenador.especialidad}
+                  value={form.especialidad}
                   onChange={handleChange}
+                  error={!!errors.especialidad}
+                  helperText={errors.especialidad}
                 />
               </Grid>
 
+              {/* Años de experiencia */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   type="number"
                   label="Años de experiencia"
                   name="experiencia_Anios"
-                  value={entrenador.experiencia_Anios}
+                  value={form.experiencia_Anios}
                   onChange={handleChange}
                 />
               </Grid>
 
+              {/* Fecha nacimiento */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   type="date"
                   label="Fecha de nacimiento"
                   name="fecha_Nacimiento"
-                  value={entrenador.fecha_Nacimiento}
-                  onChange={handleChange}
                   InputLabelProps={{ shrink: true }}
+                  value={form.fecha_Nacimiento}
+                  onChange={handleChange}
                 />
               </Grid>
 
+              {/* Sueldo */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   type="number"
                   label="Sueldo"
                   name="sueldo"
-                  value={entrenador.sueldo}
+                  value={form.sueldo}
                   onChange={handleChange}
                 />
               </Grid>
 
+              {/* Horarios */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   type="time"
                   label="Hora inicio"
                   name="hora_Inicio"
-                  value={entrenador.hora_Inicio}
-                  onChange={handleChange}
                   InputLabelProps={{ shrink: true }}
+                  value={form.hora_Inicio}
+                  onChange={handleChange}
                 />
               </Grid>
 
@@ -221,31 +244,27 @@ const EntrenadorForm = () => {
                   type="time"
                   label="Hora fin"
                   name="hora_Fin"
-                  value={entrenador.hora_Fin}
-                  onChange={handleChange}
                   InputLabelProps={{ shrink: true }}
+                  value={form.hora_Fin}
+                  onChange={handleChange}
                 />
               </Grid>
 
+              {/* Switch activo */}
               <Grid item xs={12}>
                 <FormControlLabel
                   control={
                     <Switch
-                      checked={entrenador.activo}
-                      onChange={(e) =>
-                        setEntrenador({
-                          ...entrenador,
-                          activo: e.target.checked,
-                        })
-                      }
+                      checked={form.activo}
+                      onChange={handleChange}
                       name="activo"
-                      color="primary"
                     />
                   }
-                  label={entrenador.activo ? "Activo" : "Inactivo"}
+                  label={form.activo ? "Activo" : "Inactivo"}
                 />
               </Grid>
 
+              {/* Botones */}
               <Grid item xs={12}>
                 <Stack direction="row" justifyContent="space-between">
                   <Button
@@ -268,9 +287,9 @@ const EntrenadorForm = () => {
               {mensaje}
             </Alert>
           )}
-          {error && (
+          {errorServidor && (
             <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
+              {errorServidor}
             </Alert>
           )}
         </CardContent>
