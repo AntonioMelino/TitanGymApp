@@ -1,57 +1,24 @@
-import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box, Button, Typography, Stack } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import useClientes from "../hooks/useClientes";
 
-const ClientesList = () => {
-  const [clientes, setClientes] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function ClientesList() {
+  const { clientes, loading, deleteCliente, updateCliente } = useClientes();
   const navigate = useNavigate();
 
-  const apiUrl = "http://localhost:5000/api/clientes";
-
-  useEffect(() => {
-    const fetchClientes = async () => {
-      try {
-        const response = await axios.get(apiUrl);
-        setClientes(response.data);
-      } catch (error) {
-        console.error("Error al obtener los clientes:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchClientes();
-  }, []);
-
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
     if (!window.confirm("¿Seguro que deseas desactivar este cliente?")) return;
-    try {
-      await axios.delete(`${apiUrl}/${id}`);
-      setClientes(
-        clientes.map((c) => (c.id === id ? { ...c, activo: false } : c))
-      );
-    } catch (error) {
-      console.error("Error al desactivar cliente:", error);
-    }
+    deleteCliente(id);
   };
 
-  const handleActivate = async (id) => {
+  const handleActivate = (cliente) => {
     if (!window.confirm("¿Deseas activar nuevamente este cliente?")) return;
-    try {
-      await axios.put(`${apiUrl}/${id}`, { activo: true });
-      setClientes(
-        clientes.map((c) => (c.id === id ? { ...c, activo: true } : c))
-      );
-    } catch (error) {
-      console.error("Error al activar cliente:", error);
-    }
+    updateCliente(cliente.id, { ...cliente, activo: true });
   };
 
   const columns = [
@@ -75,7 +42,6 @@ const ClientesList = () => {
         <Stack direction="row" spacing={1}>
           <Button
             variant="contained"
-            color="primary"
             size="small"
             startIcon={<EditIcon />}
             onClick={() => navigate(`/clientes/editar/${params.row.id}`)}
@@ -99,7 +65,7 @@ const ClientesList = () => {
               color="success"
               size="small"
               startIcon={<CheckCircleIcon />}
-              onClick={() => handleActivate(params.row.id)}
+              onClick={() => handleActivate(params.row)}
             >
               Activar
             </Button>
@@ -111,13 +77,9 @@ const ClientesList = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={2}
-      >
+      <Stack direction="row" justifyContent="space-between" mb={2}>
         <Typography variant="h5">Clientes</Typography>
+
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -128,16 +90,8 @@ const ClientesList = () => {
       </Stack>
 
       <div style={{ height: 500, width: "100%" }}>
-        <DataGrid
-          rows={clientes}
-          columns={columns}
-          pageSize={7}
-          loading={loading}
-          getRowId={(row) => row.id}
-        />
+        <DataGrid rows={clientes} columns={columns} loading={loading} />
       </div>
     </Box>
   );
-};
-
-export default ClientesList;
+}

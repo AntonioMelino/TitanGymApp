@@ -1,2 +1,2 @@
-export { default as EntrenadoresList } from "./EntrenadoresList";
-export { default as EntrenadorForm } from "./EntrenadorForm";
+export { default as EntrenadoresList } from "./components/EntrenadoresList";
+export { default as EntrenadorForm } from "./components/EntrenadorForm";
