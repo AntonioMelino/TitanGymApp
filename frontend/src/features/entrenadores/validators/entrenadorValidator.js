@@ -14,10 +14,10 @@ export function validarEntrenador(entrenador) {
   }
 
   // Email válido
-  if (!entrenador.email) {
-    errores.email = "El email es obligatorio.";
-  } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(entrenador.email)) {
-    errores.email = "Debe ingresar un email válido.";
+  if (!entrenador.correo) {
+    errores.correo = "El email es obligatorio.";
+  } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(entrenador.correo)) {
+    errores.correo = "Debe ingresar un email válido.";
   }
 
   // Teléfono opcional, pero si existe debe ser numérico y tener mínimo 8 dígitos
