@@ -65,27 +65,49 @@ const EntrenadorForm = () => {
   };
 
   // 📌 Submit con validaciones
+  // 📌 Submit con validaciones
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensaje(null);
     setErrorServidor(null);
 
+    // 👉 Validación (queda igual)
     const erroresVal = validarEntrenador(form);
     setErrors(erroresVal);
 
     if (Object.keys(erroresVal).length > 0) return;
 
+    // 👇 Transformación del objeto al formato que espera tu backend
+    const payload = {
+      dni: parseInt(form.dni),
+      nombre: form.nombre,
+      apellido: form.apellido,
+      direccion: form.direccion,
+      telefono: form.telefono,
+      correo: form.correo,
+      especialidad: form.especialidad,
+      experienciaAnios: parseInt(form.experiencia_Anios),
+      fechaNacimiento: form.fecha_Nacimiento || null,
+      sueldo: parseFloat(form.sueldo),
+      horaInicio: form.hora_Inicio, // format HH:mm (valid)
+      horaFin: form.hora_Fin,
+      activo: form.activo,
+    };
+
+    console.log("📤 Payload enviado al backend:", payload);
+
     try {
       if (id) {
-        await updateEntrenador(id, form);
+        await updateEntrenador(id, payload);
         setMensaje("Entrenador actualizado correctamente 💪");
       } else {
-        await addEntrenador(form);
+        await addEntrenador(payload);
         setMensaje("Entrenador creado correctamente 🏋️‍♂️");
       }
 
       setTimeout(() => navigate("/entrenadores"), 1500);
-    } catch {
+    } catch (error) {
+      console.error("❌ Error:", error);
       setErrorServidor("Error al guardar los datos. Intente nuevamente.");
     }
   };

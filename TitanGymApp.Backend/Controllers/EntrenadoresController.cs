@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TitanGymApp.Backend.Negocio;
 using TitanGymApp.Backend.Dominio;
+using TitanGymApp.Backend.Dtos;
+using TitanGymApp.Backend.Mappers;
 
 namespace TitanGymApp.Backend.Controllers
 {
@@ -10,98 +12,55 @@ namespace TitanGymApp.Backend.Controllers
     {
         private readonly EntrenadorNegocio _negocio = new EntrenadorNegocio();
 
-        // 🔹 GET: api/entrenadores
         [HttpGet]
         public IActionResult Get()
         {
-            try
-            {
-                var lista = _negocio.Listar();
-                return Ok(lista);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error al obtener entrenadores: {ex.Message}");
-            }
+            var lista = _negocio.Listar();
+            return Ok(lista);
         }
 
-        // 🔹 GET: api/entrenadores/{id}
         [HttpGet("{id}")]
         public IActionResult GetById(long id)
         {
-            try
-            {
-                var lista = _negocio.Listar();
-                var entrenador = lista.FirstOrDefault(e => e.Id == id);
+            var entrenador = _negocio.Listar().FirstOrDefault(e => e.Id == id);
 
-                if (entrenador == null)
-                    return NotFound($"No se encontró un entrenador con ID {id}");
+            if (entrenador == null)
+                return NotFound($"Entrenador con ID {id} no encontrado");
 
-                return Ok(entrenador);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error al obtener entrenador: {ex.Message}");
-            }
+            return Ok(entrenador);
         }
 
-        // 🔹 POST: api/entrenadores
         [HttpPost]
-        public IActionResult Post([FromBody] Entrenador nuevo)
+        public IActionResult Post([FromBody] EntrenadorDto dto)
         {
-            try
-            {
-                if (nuevo == null)
-                    return BadRequest("El entrenador no puede ser nulo");
+            if (dto == null)
+                return BadRequest("Datos inválidos");
 
-                _negocio.Agregar(nuevo);
-                return Ok("Entrenador agregado correctamente");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error al agregar entrenador: {ex.Message}");
-            }
+            var entrenador = EntrenadorMapper.ToModel(dto);
+            _negocio.Agregar(entrenador);
+
+            return CreatedAtAction(nameof(GetById), new { id = entrenador.Id }, entrenador);
         }
 
-        // 🔹 PUT: api/entrenadores/{id}
         [HttpPut("{id}")]
-        public IActionResult Put(long id, [FromBody] Entrenador entrenador)
+        public IActionResult Put(long id, [FromBody] EntrenadorDto dto)
         {
-            try
-            {
-                if (entrenador == null)
-                    return BadRequest("Datos del entrenador inválidos");
+            var entrenadorExistente = _negocio.Listar().FirstOrDefault(e => e.Id == id);
 
-                entrenador.Id = id;
-                _negocio.Modificar(entrenador);
-                return Ok("Entrenador actualizado correctamente");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error al modificar entrenador: {ex.Message}");
-            }
+            if (entrenadorExistente == null)
+                return NotFound($"No existe entrenador con ID {id}");
+
+            EntrenadorMapper.UpdateModel(entrenadorExistente, dto);
+            _negocio.Modificar(entrenadorExistente);
+
+            return Ok(entrenadorExistente);
         }
 
-        // 🔹 DELETE: api/entrenadores/{id}
         [HttpDelete("{id}")]
         public IActionResult Delete(long id)
         {
-            try
-            {
-                _negocio.Eliminar(id);
-                return Ok("Entrenador eliminado correctamente (baja lógica)");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error al eliminar entrenador: {ex.Message}");
-            }
-        }
-
-        // 🔹 GET: api/entrenadores/test
-        [HttpGet("test")]
-        public IActionResult Test()
-        {
-            return Ok(new { mensaje = "API de entrenadores funcionando correctamente 💪🔥" });
+            _negocio.Eliminar(id);
+            return Ok("Entrenador eliminado correctamente");
         }
     }
 }
