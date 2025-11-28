@@ -32,6 +32,28 @@ CREATE TABLE entrenadores (
     Activo BOOLEAN DEFAULT 1
 );
 
+-- 🔹 Tabla de Pagos
+CREATE TABLE pagos (
+    Id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ClienteId BIGINT NOT NULL,
+    Monto DECIMAL(10,2) NOT NULL,
+    MetodoPago ENUM('Efectivo', 'Transferencia', 'MercadoPago', 'Tarjeta', 'Otro') DEFAULT 'Efectivo',
+    FechaPago DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FechaVencimiento DATE NOT NULL,
+    Observaciones VARCHAR(255),
+    
+    RegistradoPor VARCHAR(100),
+    
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    -- 🔹 Relación con tabla clientes
+    CONSTRAINT fk_pago_cliente FOREIGN KEY (ClienteId) 
+        REFERENCES clientes(Id)
+        ON DELETE CASCADE
+);
+
+
 -- 🔹 Inserción de datos en la tabla clientes
 INSERT INTO clientes 
 (DNI, Nombre, Apellido, Direccion, Telefono, Correo, Fecha_Alta, Activo)
