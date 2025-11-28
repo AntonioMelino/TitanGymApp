@@ -1,24 +1,55 @@
 import { DataGrid } from "@mui/x-data-grid";
-import { Box, Button, Typography, Stack } from "@mui/material";
+import {
+  Box,
+  Button,
+  Typography,
+  Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import useClientes from "../hooks/useClientes";
+import { useState } from "react";
 
 export default function ClientesList() {
   const { clientes, loading, deleteCliente, updateCliente } = useClientes();
   const navigate = useNavigate();
 
-  const handleDelete = (id) => {
-    if (!window.confirm("¿Seguro que deseas desactivar este cliente?")) return;
-    deleteCliente(id);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedCliente, setSelectedCliente] = useState(null);
+  const [accion, setAccion] = useState(""); // "activar" | "desactivar"
+
+  const abrirModal = (cliente, tipo) => {
+    setSelectedCliente(cliente);
+    setAccion(tipo);
+    setModalOpen(true);
   };
 
-  const handleActivate = (cliente) => {
-    if (!window.confirm("¿Deseas activar nuevamente este cliente?")) return;
-    updateCliente(cliente.id, { ...cliente, activo: true });
+  const cerrarModal = () => {
+    setModalOpen(false);
+    setSelectedCliente(null);
+    setAccion("");
+  };
+
+  const confirmarAccion = () => {
+    if (!selectedCliente) return;
+
+    if (accion === "desactivar") {
+      deleteCliente(selectedCliente.id);
+    } else if (accion === "activar") {
+      updateCliente(selectedCliente.id, {
+        ...selectedCliente,
+        activo: true,
+      });
+    }
+
+    cerrarModal();
   };
 
   const columns = [
@@ -55,7 +86,7 @@ export default function ClientesList() {
               color="error"
               size="small"
               startIcon={<DeleteIcon />}
-              onClick={() => handleDelete(params.row.id)}
+              onClick={() => abrirModal(params.row, "desactivar")}
             >
               Desactivar
             </Button>
@@ -65,7 +96,7 @@ export default function ClientesList() {
               color="success"
               size="small"
               startIcon={<CheckCircleIcon />}
-              onClick={() => handleActivate(params.row)}
+              onClick={() => abrirModal(params.row, "activar")}
             >
               Activar
             </Button>
@@ -92,6 +123,32 @@ export default function ClientesList() {
       <div style={{ height: 500, width: "100%" }}>
         <DataGrid rows={clientes} columns={columns} loading={loading} />
       </div>
+
+      {/* MODAL DE CONFIRMACIÓN */}
+      <Dialog open={modalOpen} onClose={cerrarModal}>
+        <DialogTitle>
+          {accion === "desactivar" ? "Desactivar Cliente" : "Activar Cliente"}
+        </DialogTitle>
+
+        <DialogContent>
+          <Typography>
+            {accion === "desactivar"
+              ? `¿Estás seguro que deseas desactivar a ${selectedCliente?.nombre} ${selectedCliente?.apellido}?`
+              : `¿Deseas activar nuevamente a ${selectedCliente?.nombre} ${selectedCliente?.apellido}?`}
+          </Typography>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={cerrarModal}>Cancelar</Button>
+          <Button
+            variant="contained"
+            color={accion === "desactivar" ? "error" : "success"}
+            onClick={confirmarAccion}
+          >
+            Confirmar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
