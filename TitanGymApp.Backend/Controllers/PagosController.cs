@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TitanGymApp.Backend.Dominio;
 using TitanGymApp.Backend.Negocio;
+using TitanGymApp.Backend.Dtos;
+using TitanGymApp.Backend.Mappers;
+using System;
 
 namespace TitanGymApp.Backend.Controllers
 {
@@ -15,27 +18,20 @@ namespace TitanGymApp.Backend.Controllers
             _pagoNegocio = new PagoNegocio();
         }
 
-        // ==============================
-        // 📌 GET - LISTAR TODOS LOS PAGOS
-        // ==============================
-
         [HttpGet]
         public IActionResult GetPagos()
         {
             try
             {
                 var lista = _pagoNegocio.Listar();
-                return Ok(lista);
+                var dtos = PagoMapper.ToDtoList(lista);
+                return Ok(dtos);
             }
             catch (Exception ex)
             {
                 return BadRequest(new { mensaje = ex.Message });
             }
         }
-
-        // ==============================
-        // 📌 GET POR CLIENTE
-        // ==============================
 
         [HttpGet("cliente/{clienteId}")]
         public IActionResult GetPagosPorCliente(long clienteId)
@@ -43,32 +39,32 @@ namespace TitanGymApp.Backend.Controllers
             try
             {
                 var lista = _pagoNegocio.ListarPorCliente(clienteId);
-                return Ok(lista);
+                var dtos = PagoMapper.ToDtoList(lista);
+                return Ok(dtos);
             }
             catch (Exception ex)
             {
                 return BadRequest(new { mensaje = ex.Message });
             }
         }
-
-        // ==============================
-        // ➕ POST - AGREGAR PAGO
-        // ==============================
 
         [HttpPost]
-        public IActionResult AgregarPago([FromBody] Pago nuevoPago)
+        public IActionResult AgregarPago([FromBody] PagoDto pagoDto)
         {
             try
             {
-                if (nuevoPago == null)
+                if (pagoDto == null)
                     return BadRequest("Los datos enviados son inválidos.");
 
-                nuevoPago.CreatedAt = DateTime.Now;
-                nuevoPago.UpdatedAt = DateTime.Now;
+                // Mapear DTO -> Entidad
+                var entidad = PagoMapper.ToEntity(pagoDto);
+                entidad.CreatedAt = DateTime.Now;
+                entidad.UpdatedAt = DateTime.Now;
 
-                _pagoNegocio.Agregar(nuevoPago);
+                _pagoNegocio.Agregar(entidad);
 
-                return Ok(new { mensaje = "Pago registrado correctamente." });
+                var resultadoDto = PagoMapper.ToDto(entidad);
+                return CreatedAtAction(nameof(GetPagosPorCliente), new { clienteId = entidad.ClienteId }, resultadoDto);
             }
             catch (Exception ex)
             {
@@ -76,32 +72,32 @@ namespace TitanGymApp.Backend.Controllers
             }
         }
 
-        // ==============================
-        // 🔄 PUT - MODIFICAR PAGO
-        // ==============================
-
         [HttpPut("{id}")]
-        public IActionResult ModificarPago(long id, [FromBody] Pago pago)
+        public IActionResult ModificarPago(long id, [FromBody] PagoDto pagoDto)
         {
             try
             {
-                if (pago == null || id != pago.Id)
+                if (pagoDto == null || id != pagoDto.Id)
                     return BadRequest("Los datos enviados no coinciden.");
 
-                pago.UpdatedAt = DateTime.Now;
-                _pagoNegocio.Modificar(pago);
+                // Obtener entidad existente (desde negocio)
+                var lista = _pagoNegocio.Listar();
+                var existente = lista.Find(p => p.Id == id);
+                if (existente == null) return NotFound("Pago no encontrado.");
 
-                return Ok(new { mensaje = "Pago actualizado correctamente." });
+                // Actualizar entidad con datos del DTO
+                PagoMapper.UpdateEntity(existente, pagoDto);
+                existente.UpdatedAt = DateTime.Now;
+                _pagoNegocio.Modificar(existente);
+
+                var resultadoDto = PagoMapper.ToDto(existente);
+                return Ok(resultadoDto);
             }
             catch (Exception ex)
             {
                 return BadRequest(new { mensaje = ex.Message });
             }
         }
-
-        // ==============================
-        // ❌ DELETE - ELIMINAR 
-        // ==============================
 
         [HttpDelete("{id}")]
         public IActionResult EliminarPago(long id)
