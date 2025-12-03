@@ -74,6 +74,35 @@ VALUES
 (31500555, 'Sofía', 'Martínez', 'Av. Cabildo 321', '1145567890', 'sofiam@titangym.com', 'Yoga y Pilates', 4, '1995-11-18', 240000.00, '12:00:00', '20:00:00', 1),
 (33222001, 'Diego', 'Ruiz', 'Lavalle 888', '1138876543', 'diegoruiz@titangym.com', 'Boxeo y Cardio', 7, '1989-09-02', 265000.00, '09:00:00', '17:00:00', 1);
 
+INSERT INTO pagos
+(ClienteId, Monto, MetodoPago, FechaPago, FechaVencimiento, Observaciones, RegistradoPor)
+VALUES
+-- Juan Pérez (Id 1)
+(1, 15000.00, 'Efectivo', '2025-01-05 10:32:00', '2025-01-30', 'Cuota mensual enero', 'Lucas Gómez'),
+(1, 15000.00, 'MercadoPago', '2025-02-03 18:15:00', '2025-02-28', 'Pago con QR', 'María Fernández'),
+(1, 15000.00, 'Transferencia', '2025-03-01 09:40:00', '2025-03-30', 'Comprobante enviado por WhatsApp', 'Andrés Pérez'),
+
+-- Carla Rodríguez (Id 2)
+(2, 18000.00, 'Tarjeta', '2025-01-12 14:20:00', '2025-02-10', 'Plan musculación', 'Sofía Martínez'),
+(2, 18000.00, 'MercadoPago', '2025-02-11 11:05:00', '2025-03-10', 'Pagó justo antes del vencimiento', 'Diego Ruiz'),
+(2, 18000.00, 'Efectivo', '2025-03-08 17:32:00', '2025-04-10', NULL, 'Lucas Gómez'),
+
+-- Matías López (Id 3)
+(3, 16000.00, 'Transferencia', '2025-01-03 09:12:00', '2025-01-31', 'Pago inicial', 'María Fernández'),
+(3, 16000.00, 'Efectivo', '2025-02-01 16:44:00', '2025-02-28', NULL, 'Andrés Pérez'),
+(3, 16000.00, 'Tarjeta', '2025-03-02 08:50:00', '2025-03-31', 'Pago automático', 'Sofía Martínez'),
+
+-- Lucía Fernández (Id 4, cliente inactivo pero con historial)
+(4, 14000.00, 'MercadoPago', '2024-12-20 15:22:00', '2025-01-20', 'Último pago antes de darse de baja', 'Diego Ruiz'),
+(4, 14000.00, 'Efectivo', '2024-11-18 11:00:00', '2024-12-18', NULL, 'Lucas Gómez'),
+(4, 14000.00, 'Transferencia', '2024-10-15 09:45:00', '2024-11-15', 'Retraso de 3 días', 'María Fernández'),
+
+-- Diego Gómez (Id 5)
+(5, 17000.00, 'Tarjeta', '2025-01-09 13:25:00', '2025-02-05', 'Inscripción + cuota', 'Andrés Pérez'),
+(5, 17000.00, 'MercadoPago', '2025-02-06 19:10:00', '2025-03-05', 'Pago rápido con QR', 'Sofía Martínez'),
+(5, 17000.00, 'Efectivo', '2025-03-05 12:55:00', '2025-04-05', 'Pidió comprobante impreso', 'Diego Ruiz');
+
+
 
 USE titangymapp;
 drop database titangymapp;

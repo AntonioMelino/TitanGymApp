@@ -20,6 +20,10 @@ function App() {
           <Route path="/entrenadores" element={<EntrenadoresList />} />
           <Route path="/entrenadores/nuevo" element={<EntrenadorForm />} />
           <Route path="/entrenadores/editar/:id" element={<EntrenadorForm />} />
+
+          {/* PAGOS */}
+          <Route path="/pagos" element={<PagosList />} />
+          <Route path="/pagos/nuevo" element={<PagoForm />} />
         </Routes>
       </DashboardLayout>
     </Router>
