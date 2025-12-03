@@ -3,6 +3,7 @@ import DashboardLayout from "./layout/DashboardLayout";
 import Home from "./pages/Home";
 import { ClientesList, ClienteForm } from "./features/clientes";
 import { EntrenadoresList, EntrenadorForm } from "./features/entrenadores";
+import { PagosList, PagoForm } from "./features/pagos";
 
 function App() {
   return (

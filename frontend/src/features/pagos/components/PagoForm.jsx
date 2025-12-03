@@ -1,5 +1,5 @@
 import { useState } from "react";
-import pagosService from "./pagosService";
+import pagosService from "../services/pagosService";
 import { useNavigate } from "react-router-dom";
 
 export default function PagoForm() {
