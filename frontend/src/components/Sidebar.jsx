@@ -6,7 +6,12 @@ import {
   ListItemText,
   useTheme,
 } from "@mui/material";
-import { Home, People, SportsGymnastics } from "@mui/icons-material";
+import {
+  Home,
+  People,
+  SportsGymnastics,
+  Paid, // 👈 NUEVO ÍCONO PARA PAGOS
+} from "@mui/icons-material";
 import { Link, useLocation } from "react-router-dom";
 
 const drawerWidth = 240;
@@ -82,6 +87,21 @@ export default function Sidebar() {
             <SportsGymnastics />
           </ListItemIcon>
           <ListItemText primary="Entrenadores" />
+        </ListItemButton>
+
+        {/* PAGOS */}
+        <ListItemButton
+          component={Link}
+          to="/pagos"
+          sx={{
+            color: textColor,
+            ...(location.pathname === "/pagos" && activeStyle),
+          }}
+        >
+          <ListItemIcon sx={{ color: textColor }}>
+            <Paid />
+          </ListItemIcon>
+          <ListItemText primary="Pagos" />
         </ListItemButton>
       </List>
     </Drawer>
