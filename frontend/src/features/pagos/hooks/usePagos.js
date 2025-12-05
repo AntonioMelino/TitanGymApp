@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import pagosService from "../services/pagosService";
 
 export default function usePagos() {
@@ -6,17 +6,26 @@ export default function usePagos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchPagos = async () => {
+  const fetchPagos = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await pagosService.getPagos();
-      setPagos(res.data);
+      const response = await pagosService.getPagos();
+      setPagos(response.data);
     } catch (err) {
-      setError(err.message);
+      setError(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // ← IMPORTANTE: vacío y memoriza la función
 
-  return { pagos, loading, error, fetchPagos };
+  useEffect(() => {
+    fetchPagos();
+  }, [fetchPagos]); // ← ya no genera bucle
+
+  return {
+    pagos,
+    loading,
+    error,
+    fetchPagos,
+  };
 }

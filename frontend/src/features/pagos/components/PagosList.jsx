@@ -1,14 +1,9 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import usePagos from "../hooks/usePagos";
 
 export default function PagosList() {
-  const { pagos, loading, error, fetchPagos } = usePagos();
+  const { pagos, loading, error } = usePagos();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchPagos();
-  });
 
   if (loading) return <p>Cargando pagos...</p>;
   if (error) return <p>Error: {error}</p>;
