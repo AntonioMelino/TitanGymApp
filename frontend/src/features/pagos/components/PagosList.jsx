@@ -1,3 +1,9 @@
+import { DataGrid } from "@mui/x-data-grid";
+import { Box, Button, Typography, Stack } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import PaymentIcon from "@mui/icons-material/Payment";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import { useNavigate } from "react-router-dom";
 import usePagos from "../hooks/usePagos";
 
@@ -5,43 +11,65 @@ export default function PagosList() {
   const { pagos, loading, error } = usePagos();
   const navigate = useNavigate();
 
-  if (loading) return <p>Cargando pagos...</p>;
   if (error) return <p>Error: {error}</p>;
 
+  const columns = [
+    { field: "id", headerName: "ID", width: 80 },
+    { field: "clienteId", headerName: "ID Cliente", width: 120 },
+    {
+      field: "monto",
+      headerName: "Monto",
+      width: 150,
+      renderCell: (params) => `$ ${params.value}`,
+    },
+    {
+      field: "fechaPago",
+      headerName: "Fecha Pago",
+      width: 150,
+      renderCell: (params) =>
+        params.value ? params.value.substring(0, 10) : "-",
+    },
+    {
+      field: "estado",
+      headerName: "Estado",
+      width: 140,
+      renderCell: (params) =>
+        params.value === "Pagado" ? (
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <CheckCircleIcon color="success" fontSize="small" />
+            Pagado
+          </Stack>
+        ) : (
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <HourglassEmptyIcon color="warning" fontSize="small" />
+            Pendiente
+          </Stack>
+        ),
+    },
+  ];
+
   return (
-    <div className="container mt-4">
-      <h2>Pagos</h2>
+    <Box sx={{ p: 3 }}>
+      <Stack direction="row" justifyContent="space-between" mb={2}>
+        <Typography
+          variant="h5"
+          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+        >
+          <PaymentIcon /> Pagos
+        </Typography>
 
-      <button
-        className="btn btn-primary mb-3"
-        onClick={() => navigate("/pagos/nuevo")}
-      >
-        Nuevo Pago
-      </button>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => navigate("/pagos/nuevo")}
+        >
+          Nuevo Pago
+        </Button>
+      </Stack>
 
-      <table className="table table-striped">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>ID Cliente</th>
-            <th>Monto</th>
-            <th>Fecha Pago</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {pagos.map((p) => (
-            <tr key={p.id}>
-              <td>{p.id}</td>
-              <td>{p.clienteId}</td>
-              <td>${p.monto}</td>
-              <td>{p.fechaPago?.substring(0, 10)}</td>
-              <td>{p.estado}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+      <div style={{ height: 500, width: "100%" }}>
+        <DataGrid rows={pagos} columns={columns} loading={loading} />
+      </div>
+    </Box>
   );
 }
